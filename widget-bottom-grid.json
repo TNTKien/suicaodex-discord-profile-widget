@@ -1,0 +1,66 @@
+{
+  "data": {
+    "dynamic": [
+      {
+        "type": 1,
+        "name": "public",
+        "value": "Publication"
+      },
+      {
+        "type": 1,
+        "name": "status_label",
+        "value": "Status"
+      },
+      {
+        "type": 1,
+        "name": "year",
+        "value": "2020"
+      },
+      {
+        "type": 1,
+        "name": "status_text",
+        "value": "Ongoing"
+      },
+      {
+        "type": 1,
+        "name": "last_updated",
+        "value": "Updated"
+      },
+      {
+        "type": 1,
+        "name": "last_updated_value",
+        "value": "20/09/2025"
+      },
+      {
+        "type": 2,
+        "name": "stats_chapters_count",
+        "value": 123
+      },
+      {
+        "type": 1,
+        "name": "stats_chapters",
+        "value": "Chapters"
+      },
+      {
+        "type": 2,
+        "name": "stats_follows_count",
+        "value": 134344
+      },
+      {
+        "type": 1,
+        "name": "stats_follows",
+        "value": "Follows"
+      },
+      {
+        "type": 2,
+        "name": "stats_views_count",
+        "value": 324334
+      },
+      {
+        "type": 1,
+        "name": "stats_views",
+        "value": "Views"
+      }
+    ]
+  }
+}
