@@ -5,3 +5,4 @@ dist/
 .env.*
 !.env.example
 bun.lockb
+ecosystem.config.cjs

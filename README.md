@@ -150,6 +150,19 @@ Cover URLs are built as:
 https://i.suicaodex.com/covers/{manga_id}/{cover_id}{cover_ext}
 ```
 
+## Hosting
+
+You can use pm2 to run the service in the background:
+
+```bash
+bun i -g pm2
+cp example.ecosystem.config.cjs ecosystem.config.cjs
+# Edit ecosystem.config.cjs to set the correct cwd path
+pm2 start ecosystem.config.cjs
+```
+
+If you want to run 24/7, a VPS is recommended. I will try to make it work on Railway or Cloudflare Workers later.
+
 ## Acknowledgements
 
 Thanks to the projects that made this widget easier to build:
