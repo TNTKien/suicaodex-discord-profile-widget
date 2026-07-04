@@ -2,6 +2,8 @@
 
 Standalone Bun + TypeScript service that periodically picks a random manga from SuicaoDex and pushes it to a Discord Social SDK profile widget.
 
+<img width="577" height="456" alt="image" src="https://github.com/user-attachments/assets/4a56579f-8bef-408c-ba7e-37164af934ae" />
+
 ## Requirements
 
 - [Bun 1.3+](https://bun.com/docs/installation)
