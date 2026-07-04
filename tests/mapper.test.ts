@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { loadConfig } from "./config";
-import { buildCoverUrl, mangaToWidgetPayload } from "./mapper";
-import type { Manga } from "./suicaodex";
+import { loadConfig } from "../src/config";
+import { buildCoverUrl, mangaToWidgetPayload } from "../src/mapper";
+import type { Manga } from "../src/suicaodex";
 
 const config = loadConfig({
   DISCORD_APPLICATION_ID: "app-123",

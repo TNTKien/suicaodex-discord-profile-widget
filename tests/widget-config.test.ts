@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { bindDefaultWidgetPlaceholders } from "./widget-config";
+import { bindDefaultWidgetPlaceholders } from "../src/widget-config";
 
 describe("bindDefaultWidgetPlaceholders", () => {
   test("converts default placeholder strings to dynamic data fields", () => {

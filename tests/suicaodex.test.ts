@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { loadConfig } from "./config";
-import { fetchRandomManga } from "./suicaodex";
+import { loadConfig } from "../src/config";
+import { fetchRandomManga } from "../src/suicaodex";
 
 const config = loadConfig({
   DISCORD_APPLICATION_ID: "app-123",

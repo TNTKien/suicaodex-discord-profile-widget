@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { loadConfig } from "./config";
-import { resolveCoverUrl } from "./image-hosting";
-import type { Manga } from "./suicaodex";
+import { loadConfig } from "../src/config";
+import { resolveCoverUrl } from "../src/image-hosting";
+import type { Manga } from "../src/suicaodex";
 
 const manga: Manga = {
   id: "manga-1",

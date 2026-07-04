@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { loadConfig } from "./config";
-import { patchDiscordProfile } from "./discord";
+import { loadConfig } from "../src/config";
+import { patchDiscordProfile } from "../src/discord";
 
 const config = loadConfig({
   DISCORD_APPLICATION_ID: "app-123",
