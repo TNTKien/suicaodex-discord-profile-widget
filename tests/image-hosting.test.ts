@@ -15,18 +15,6 @@ const manga: Manga = {
 };
 
 describe("resolveCoverUrl", () => {
-  test("uses the origin cover URL when no image webhook is configured", async () => {
-    const config = loadConfig({
-      DISCORD_APPLICATION_ID: "app",
-      DISCORD_USER_ID: "user",
-      DISCORD_BOT_TOKEN: "token",
-    });
-
-    const url = await resolveCoverUrl(manga, config);
-
-    expect(url).toBe("https://i.suicaodex.com/covers/manga-1/cover-1.webp");
-  });
-
   test("uploads the cover to a Discord webhook and returns the attachment URL", async () => {
     const config = loadConfig({
       DISCORD_APPLICATION_ID: "app",

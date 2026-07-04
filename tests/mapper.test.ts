@@ -7,6 +7,7 @@ const config = loadConfig({
   DISCORD_APPLICATION_ID: "app-123",
   DISCORD_USER_ID: "user-456",
   DISCORD_BOT_TOKEN: "bot-token",
+  DISCORD_IMAGE_WEBHOOK_URL: "https://discord.com/api/webhooks/123/token",
   MANGA_DESCRIPTION_MAX_LENGTH: "45",
 });
 

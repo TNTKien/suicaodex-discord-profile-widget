@@ -59,6 +59,27 @@ export async function fetchRandomManga(
   return data;
 }
 
+export async function fetchMangaById(
+  config: AppConfig,
+  id: string,
+  fetchImpl: FetchLike = fetch,
+): Promise<Manga> {
+  const response = await fetchImpl(
+    `${config.suicaodex.apiBaseUrl}/manga/${encodeURIComponent(id)}`,
+  );
+  if (!response.ok) {
+    throw new Error(
+      `SuicaoDex manga request for ${id} failed with ${response.status}: ${await readErrorMessage(response)}`,
+    );
+  }
+
+  const data = (await response.json()) as Manga;
+  if (!data.id || !data.title) {
+    throw new Error(`SuicaoDex manga response for ${id} is missing id or title.`);
+  }
+  return data;
+}
+
 async function readErrorMessage(response: Response): Promise<string> {
   try {
     const body = (await response.json()) as { error?: { message?: string }; message?: string };
