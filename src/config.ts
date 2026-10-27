@@ -13,7 +13,6 @@ export interface AppConfig {
   };
   suicaodex: {
     apiBaseUrl: string;
-    coverBaseUrl: string;
     contentRatings: string[];
     hasChapters: boolean;
   };
@@ -52,7 +51,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     mode,
     fixed: {
       mangaIds: fixedMangaIds,
-      cacheDir: ".cache/suicaodex/manga",
+      cacheDir: ".cache/suicaodex/redive/manga",
     },
     discord: {
       apiBaseUrl: stripTrailingSlash(env.DISCORD_API_BASE_URL ?? "https://discord.com/api/v9"),
@@ -62,10 +61,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
       imageWebhookUrl: requireEnv(env, "DISCORD_IMAGE_WEBHOOK_URL"),
     },
     suicaodex: {
-      apiBaseUrl: stripTrailingSlash(env.SUICAODEX_API_BASE_URL ?? "https://wd.suicaodex.com"),
-      coverBaseUrl: stripTrailingSlash(
-        env.SUICAODEX_COVER_BASE_URL ?? "https://i.suicaodex.com/covers",
-      ),
+      apiBaseUrl: stripTrailingSlash(env.SUICAODEX_API_BASE_URL ?? "https://redive.suicaodex.com"),
       contentRatings: parseCsv(env.CONTENT_RATING ?? "safe", ["safe"]),
       hasChapters: parseBoolean(env.HAS_CHAPTERS, true),
     },

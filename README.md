@@ -1,6 +1,6 @@
 # SuicaoDex Discord Profile Widget
 
-Standalone Bun + TypeScript service that periodically picks a random manga from SuicaoDex and pushes it to a Discord Social SDK profile widget.
+Standalone Bun + TypeScript service that periodically picks a random manga from SuicaoDex Re:Dive and pushes it to a Discord Social SDK profile widget.
 
 <img width="577" height="456" alt="image" src="https://github.com/user-attachments/assets/4a56579f-8bef-408c-ba7e-37164af934ae" />
 
@@ -56,15 +56,21 @@ Optional:
 | Name | Default | Description |
 | --- | --- | --- |
 | `MODE` | `random` | Update mode. Use `random` to fetch a random manga each interval, or `fixed` to rotate through `FIXED_MANGA_IDS`. |
-| `FIXED_MANGA_IDS` | empty | Comma-separated SuicaoDex manga IDs used when `MODE=fixed`. |
+| `FIXED_MANGA_IDS` | empty | Comma-separated Re:Dive manga UUIDs used when `MODE=fixed`. |
 | `UPDATE_INTERVAL_SECONDS` | `300` | Delay between widget updates. Minimum is `300` in random mode and `60` in fixed mode. |
 | `CONTENT_RATING` | `safe` | Comma-separated SuicaoDex content ratings. Keep `safe` for public widgets. |
 | `HAS_CHAPTERS` | `true` | Filter random picks to manga with chapters. |
 | `USERNAME_FORMAT` | `Reading {title}` | Discord profile identity username format. Supports `{title}` and `{id}`. |
 | `MANGA_DESCRIPTION_MAX_LENGTH` | `100` | Description truncation length. Maximum is `100`. |
-| `SUICAODEX_API_BASE_URL` | `https://wd.suicaodex.com` | SuicaoDex API base URL. |
-| `SUICAODEX_COVER_BASE_URL` | `https://i.suicaodex.com/covers` | Cover CDN base URL. |
+| `SUICAODEX_API_BASE_URL` | `https://redive.suicaodex.com` | Re:Dive API origin, without `/v1`. No API key is required. |
 | `DISCORD_API_BASE_URL` | `https://discord.com/api/v9` | Discord API base URL. |
+
+Random mode requests `/v1/manga/random?limit=10`, filters the returned candidates by
+`CONTENT_RATING` and `HAS_CHAPTERS`, then loads the selected manga's full details.
+Re:Dive caches this random batch for ten minutes and does not accept these filters
+on the random endpoint. If the batch has no matching manga, the tool checks up to
+five catalog pages. If none match, it reports an error and retries on the next
+update instead of showing a manga outside the configured ratings.
 
 ## Fixed Mode
 
@@ -76,15 +82,19 @@ FIXED_MANGA_IDS=manga-id-1,manga-id-2,manga-id-3
 UPDATE_INTERVAL_SECONDS=60
 ```
 
-On startup, the service loads each configured manga from `.cache/suicaodex/manga/`.
+Use Re:Dive UUIDs rather than WD's short IDs. Existing WD IDs can be looked up with
+`GET https://redive.suicaodex.com/v1/legacy/manga/{wd-id}`; use the returned `id`.
+
+On startup, the service loads each configured manga from `.cache/suicaodex/redive/manga/`.
 
 Missing cache
 files are fetched once from SuicaoDex and written to that directory. After startup, the widget rotates
 through the cached manga in `FIXED_MANGA_IDS` order and does not refetch SuicaoDex data on each
 interval.
 
-Delete `.cache/suicaodex/manga/<id>.json` or
-the whole `.cache/` directory to force a fresh fetch.
+Delete `.cache/suicaodex/redive/manga/<id>.json` or
+the whole `.cache/` directory to force a fresh fetch. The new cache directory keeps
+previous WD cache files separate from the Re:Dive data format.
 
 ## Widget Fields
 
@@ -100,13 +110,13 @@ Configure the Discord widget layout to read these dynamic fields:
 | `manga_author` | String | First author name |
 | `manga_description` | String | Short description |
 | `manga_status` | String | Publication status |
-| `manga_chapter` | String | Last chapter label |
+| `manga_chapter` | String | Latest uploaded chapter number, or `Oneshot` |
 | `image` | Media | Cover URL |
 | `hero_manga_cover` | Media | Cover URL used by the mini profile hero image |
 | `public` / `year` | String | `Publication` / release year |
 | `status_label` / `status_text` | String | `Status` / publication status |
 | `last_updated` / `last_updated_value` | String | `Updated` / last uploaded chapter date |
-| `stats_chapters` / `stats_chapters_count` | String / Number | `Chapters` / chapter count |
+| `stats_chapters` / `stats_chapters_count` | String / Number | `Chapters` / logical chapter count (`chapterCounts.slots`, excluding duplicate releases) |
 | `stats_follows` / `stats_follows_count` | String / Number | `Follows` / follow count |
 | `stats_views` / `stats_views_count` | String / Number | `Views` / view count |
 
@@ -146,11 +156,9 @@ The tool will download each cover once, upload it to that
 webhook with `wait=true`, cache the returned Discord CDN URL for the current process, and use that CDN
 URL in the widget.
 
-Cover URLs are built as:
-
-```text
-https://i.suicaodex.com/covers/{manga_id}/{cover_id}{cover_ext}
-```
+The tool uses `cover.url` returned by Re:Dive, including its 512px image variant
+and any legacy storage path. It does not reconstruct cover URLs from manga IDs;
+`SUICAODEX_COVER_BASE_URL` is no longer used.
 
 ## Hosting
 

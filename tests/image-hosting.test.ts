@@ -6,12 +6,7 @@ import type { Manga } from "../src/suicaodex";
 const manga: Manga = {
   id: "manga-1",
   title: "Random Manga",
-  relationships: {
-    cover: {
-      id: "cover-1",
-      ext: ".webp",
-    },
-  },
+  cover: { url: "https://i.suicaodex.com/covers/manga-1/cover-1.512.webp" },
 };
 
 describe("resolveCoverUrl", () => {
@@ -23,7 +18,10 @@ describe("resolveCoverUrl", () => {
       DISCORD_IMAGE_WEBHOOK_URL: "https://discord.com/api/webhooks/123/token",
     });
     const calls: Array<{ url: string; init: RequestInit | undefined }> = [];
-    const fakeFetch = async (input: string | URL | Request, init?: RequestInit) => {
+    const fakeFetch = async (
+      input: string | URL | Request,
+      init?: RequestInit,
+    ) => {
       calls.push({ url: String(input), init });
       if (String(input).startsWith("https://i.suicaodex.com")) {
         return new Response(new Uint8Array([1, 2, 3]), {
@@ -33,7 +31,9 @@ describe("resolveCoverUrl", () => {
       }
       return new Response(
         JSON.stringify({
-          attachments: [{ url: "https://cdn.discordapp.com/attachments/cover.webp" }],
+          attachments: [
+            { url: "https://cdn.discordapp.com/attachments/cover.webp" },
+          ],
         }),
         { status: 200, headers: { "content-type": "application/json" } },
       );
@@ -43,7 +43,7 @@ describe("resolveCoverUrl", () => {
 
     expect(url).toBe("https://cdn.discordapp.com/attachments/cover.webp");
     expect(calls.map((call) => call.url)).toEqual([
-      "https://i.suicaodex.com/covers/manga-1/cover-1.webp",
+      "https://i.suicaodex.com/covers/manga-1/cover-1.512.webp",
       "https://discord.com/api/webhooks/123/token?wait=true",
     ]);
     expect(calls[1]?.init?.method).toBe("POST");

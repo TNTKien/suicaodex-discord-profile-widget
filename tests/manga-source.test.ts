@@ -8,16 +8,27 @@ import { createMangaSource } from "../src/manga-source";
 const tempDirs: string[] = [];
 
 afterEach(async () => {
-  await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+  await Promise.all(
+    tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })),
+  );
 });
 
 describe("createMangaSource", () => {
   test("uses the random endpoint on each nextManga call in random mode", async () => {
     const config = baseConfig("random", []);
     const seenUrls: string[] = [];
+    let picks = 0;
     const fakeFetch = async (input: string | URL | Request) => {
       seenUrls.push(String(input));
-      return new Response(JSON.stringify({ id: `manga-${seenUrls.length}`, title: "Random" }), {
+      const random = String(input).includes("/random?");
+      if (random) picks++;
+      const manga = {
+        id: `manga-${picks}`,
+        title: "Random",
+        contentRating: "safe",
+        latestChapter: { number: "1" },
+      };
+      return new Response(JSON.stringify(random ? { data: [manga] } : manga), {
         status: 200,
         headers: { "content-type": "application/json" },
       });
@@ -26,10 +37,10 @@ describe("createMangaSource", () => {
 
     await expect(source.nextManga()).resolves.toMatchObject({ id: "manga-1" });
     await expect(source.nextManga()).resolves.toMatchObject({ id: "manga-2" });
-    expect(seenUrls).toHaveLength(2);
-    expect(seenUrls.every((url) => url.startsWith("https://wd.suicaodex.com/manga/random"))).toBe(
-      true,
-    );
+    expect(seenUrls).toHaveLength(4);
+    expect(
+      seenUrls.filter((url) => url.includes("/v1/manga/random?")),
+    ).toHaveLength(2);
   });
 
   test("warms fixed manga once and rotates cached results in fixed mode", async () => {
@@ -47,8 +58,8 @@ describe("createMangaSource", () => {
     const source = await createMangaSource(config, fakeFetch);
 
     expect(seenUrls).toEqual([
-      "https://wd.suicaodex.com/manga/manga-1",
-      "https://wd.suicaodex.com/manga/manga-2",
+      "https://redive.suicaodex.com/v1/manga/manga-1",
+      "https://redive.suicaodex.com/v1/manga/manga-2",
     ]);
     await expect(source.nextManga()).resolves.toMatchObject({ id: "manga-1" });
     await expect(source.nextManga()).resolves.toMatchObject({ id: "manga-2" });
@@ -72,11 +83,13 @@ describe("createMangaSource", () => {
 
   test("keeps random and multi-id fixed sources running after updates", async () => {
     const fixedCacheDir = await createTempDir();
-    const randomSource = await createMangaSource(baseConfig("random", []), async () =>
-      new Response(JSON.stringify({ id: "manga-1", title: "Random" }), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      }),
+    const randomSource = await createMangaSource(
+      baseConfig("random", []),
+      async () =>
+        new Response(JSON.stringify({ id: "manga-1", title: "Random" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
     );
     const fixedSource = await createMangaSource(
       baseConfig("fixed", ["manga-1", "manga-2"], fixedCacheDir),
@@ -103,7 +116,7 @@ async function createTempDir(): Promise<string> {
 function baseConfig(
   mode: AppConfig["mode"],
   mangaIds: string[],
-  cacheDir = ".cache/suicaodex/manga",
+  cacheDir = ".cache/suicaodex/redive/manga",
 ): AppConfig {
   return {
     mode,
@@ -119,8 +132,8 @@ function baseConfig(
       imageWebhookUrl: "https://discord.com/api/webhooks/123/token",
     },
     suicaodex: {
-      apiBaseUrl: "https://wd.suicaodex.com",
-      coverBaseUrl: "https://i.suicaodex.com/covers",
+      apiBaseUrl: "https://redive.suicaodex.com",
+
       contentRatings: ["safe"],
       hasChapters: true,
     },
