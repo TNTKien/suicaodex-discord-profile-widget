@@ -9,7 +9,7 @@ export async function resolveCoverUrl(
   config: AppConfig,
   fetchImpl: FetchLike = fetch,
 ): Promise<string> {
-  const originUrl = buildCoverUrl(manga, config);
+  const originUrl = buildCoverUrl(manga);
   if (!originUrl || !config.discord.imageWebhookUrl) {
     return originUrl;
   }

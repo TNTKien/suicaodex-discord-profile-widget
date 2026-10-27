@@ -1,5 +1,5 @@
 import type { AppConfig } from "./config";
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import type { Manga } from "./suicaodex";
 
 export type DiscordDynamicField =
@@ -20,28 +20,45 @@ export function mangaToWidgetPayload(
   options: { coverUrl?: string } = {},
 ): WidgetPayload {
   const title = displayTitle(manga);
-  const author = firstName(manga.relationships?.authors) || "Unknown";
-  const coverUrl = options.coverUrl ?? buildCoverUrl(manga, config);
-  const stats = manga.relationships?.stats;
+  const author = firstName(manga.authors) || "Unknown";
+  const coverUrl = options.coverUrl ?? buildCoverUrl(manga);
+  const stats = manga.statistics;
 
   const dynamic: DiscordDynamicField[] = [
     stringField("manga_title", title),
     stringField("manga_author", author),
-    stringField("manga_description", truncate(cleanText(manga.description ?? ""), config.widget.descriptionMaxLength)),
+    stringField(
+      "manga_description",
+      truncate(
+        cleanText(manga.description ?? ""),
+        config.widget.descriptionMaxLength,
+      ),
+    ),
     stringField("manga_status", manga.status ?? "unknown"),
-    stringField("manga_chapter", manga.last_chapter ? `Chapter ${manga.last_chapter}` : "No chapters"),
+    stringField("manga_chapter", chapterLabel(manga)),
     stringField("title", title),
     stringField("text_1", author),
     stringField("text_2", " "),
     stringField("public", "Publication"),
-    stringField("year", typeof manga.year === "number" ? String(manga.year) : "Unknown"),
+    stringField(
+      "year",
+      typeof manga.year === "number" ? String(manga.year) : "Unknown",
+    ),
     stringField("status_label", "Status"),
     stringField("status_text", (manga.status ?? "unknown").toUpperCase()),
     stringField("last_updated", "Updated"),
     stringField("last_updated_value", formatLastUpdated(manga)),
-    { type: 2, name: "stats_chapters_count", value: normalizeStat(stats?.chapters) },
+    {
+      type: 2,
+      name: "stats_chapters_count",
+      value: normalizeStat(manga.chapterCounts?.slots),
+    },
     stringField("stats_chapters", "Chapters"),
-    { type: 2, name: "stats_follows_count", value: normalizeStat(stats?.follows) },
+    {
+      type: 2,
+      name: "stats_follows_count",
+      value: normalizeStat(stats?.follows),
+    },
     stringField("stats_follows", "Follows"),
     { type: 2, name: "stats_views_count", value: normalizeStat(stats?.views) },
     stringField("stats_views", "Views"),
@@ -49,7 +66,11 @@ export function mangaToWidgetPayload(
 
   if (coverUrl) {
     dynamic.push({ type: 3, name: "image", value: { url: coverUrl } });
-    dynamic.push({ type: 3, name: "hero_manga_cover", value: { url: coverUrl } });
+    dynamic.push({
+      type: 3,
+      name: "hero_manga_cover",
+      value: { url: coverUrl },
+    });
   }
 
   return {
@@ -58,17 +79,21 @@ export function mangaToWidgetPayload(
   };
 }
 
-export function buildCoverUrl(manga: Manga, config: AppConfig): string {
-  const cover = manga.relationships?.cover;
-  if (!cover?.id) {
-    return "";
+export function buildCoverUrl(manga: Manga): string {
+  if (!manga.cover?.url) return "";
+  const url = new URL(manga.cover.url);
+  if (!["http:", "https:"].includes(url.protocol)) {
+    throw new Error("Re:Dive cover URL must use HTTP or HTTPS.");
   }
-  const ext = cover.ext?.startsWith(".") ? cover.ext : `.${cover.ext || "webp"}`;
-  return `${config.suicaodex.coverBaseUrl}/${manga.id}/${cover.id}${ext}`;
+  return url.toString();
 }
 
 function stringField(name: string, value: string): DiscordDynamicField {
-  return { type: 1, name, value: truncate(value, MAX_DYNAMIC_STRING_VALUE_LENGTH) };
+  return {
+    type: 1,
+    name,
+    value: truncate(value, MAX_DYNAMIC_STRING_VALUE_LENGTH),
+  };
 }
 
 function firstName(items: Array<{ name: string }> | undefined): string {
@@ -84,13 +109,21 @@ function cleanText(value: string): string {
 }
 
 function formatLastUpdated(manga: Manga): string {
-  if (manga.last_uploaded_chapter_at) {
-    const date = new Date(manga.last_uploaded_chapter_at);
-    if (!Number.isNaN(date.getTime())) {
+  if (manga.latestChapterPublishedAt) {
+    const date = parseISO(manga.latestChapterPublishedAt);
+    if (isValid(date)) {
       return format(date, "dd/MM/yyyy");
     }
   }
-  return manga.last_chapter ? `Chapter ${manga.last_chapter}` : "No updates";
+  return manga.latestChapter ? chapterLabel(manga) : "No updates";
+}
+
+function chapterLabel(manga: Manga): string {
+  return manga.latestChapter
+    ? manga.latestChapter.number === null
+      ? "Oneshot"
+      : `Chapter ${manga.latestChapter.number}`
+    : "No chapters";
 }
 
 function normalizeStat(value: number | null | undefined): number {

@@ -26,8 +26,8 @@ describe("createFixedMangaSource", () => {
     const source = await createFixedMangaSource(config, fakeFetch);
 
     expect(seenUrls).toEqual([
-      "https://wd.suicaodex.com/manga/manga-1",
-      "https://wd.suicaodex.com/manga/manga-2",
+      "https://redive.suicaodex.com/v1/manga/manga-1",
+      "https://redive.suicaodex.com/v1/manga/manga-2",
     ]);
     expect(JSON.parse(await readFile(join(cacheDir, "manga-1.json"), "utf8"))).toMatchObject({
       id: "manga-1",
@@ -130,8 +130,7 @@ function configWithCache(cacheDir: string, mangaIds: string[]): AppConfig {
       imageWebhookUrl: "",
     },
     suicaodex: {
-      apiBaseUrl: "https://wd.suicaodex.com",
-      coverBaseUrl: "https://i.suicaodex.com/covers",
+      apiBaseUrl: "https://redive.suicaodex.com",
       contentRatings: ["safe"],
       hasChapters: true,
     },

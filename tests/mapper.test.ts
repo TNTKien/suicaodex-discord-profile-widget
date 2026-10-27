@@ -14,44 +14,52 @@ const config = loadConfig({
 const manga: Manga = {
   id: "manga-1",
   title: "Futari no Taisei",
-  alt_titles: {
+  alternativeTitles: {
     vi: ["Hai Mặt Của Taisei"],
     en: ["Two Sides of Taisei"],
   },
   year: 2019,
   status: "completed",
-  demographic: "shounen",
   description:
     "Genius shogi player Taisei Amado has a double secret.\nThis description is intentionally long.",
-  last_chapter: "27",
-  last_uploaded_chapter_at: "2026-02-26T14:11:47.054Z",
-  content_rating: "safe",
-  relationships: {
-    cover: {
-      id: "cover-1",
-      ext: ".webp",
-    },
-    tags: [
-      { id: "tag-1", name: "Drama", group: "genre" },
-      { id: "tag-2", name: "Psychological", group: "genre" },
-      { id: "tag-3", name: "Traditional Games", group: "theme" },
-      { id: "tag-4", name: "Sports", group: "theme" },
-    ],
-    authors: [{ id: "author-1", name: "Fukuda Kentarou", group: "author" }],
-    artists: [{ id: "artist-1", name: "Fukuda Kentarou", group: "author" }],
-    stats: {
-      chapters: 27,
-      follows: 134,
-      views: 9876,
-    },
+  latestChapter: { number: "27" },
+  latestChapterPublishedAt: "2026-02-26T14:11:47.054Z",
+  contentRating: "safe",
+  cover: { url: "https://i.suicaodex.com/covers/manga-1/cover-1.512.webp" },
+  tags: [
+    { id: "tag-1", name: "Drama", group: "genre" },
+    { id: "tag-2", name: "Psychological", group: "genre" },
+    { id: "tag-3", name: "Traditional Games", group: "theme" },
+    { id: "tag-4", name: "Sports", group: "theme" },
+  ],
+  authors: [{ id: "author-1", name: "Fukuda Kentarou" }],
+  chapterCounts: { slots: 27, releases: 29 },
+  statistics: {
+    follows: 134,
+    views: 9876,
   },
 };
 
 describe("buildCoverUrl", () => {
-  test("builds the SuicaoDex cover CDN URL from manga and cover ids", () => {
-    expect(buildCoverUrl(manga, config)).toBe(
-      "https://i.suicaodex.com/covers/manga-1/cover-1.webp",
+  test("uses the cover URL returned by Re:Dive", () => {
+    expect(buildCoverUrl(manga)).toBe(
+      "https://i.suicaodex.com/covers/manga-1/cover-1.512.webp",
     );
+  });
+
+  test("preserves legacy cover paths instead of rebuilding them from the canonical id", () => {
+    expect(
+      buildCoverUrl({
+        ...manga,
+        cover: {
+          url: "https://i.suicaodex.com/covers/wd-id/wd-cover.512.webp",
+        },
+      }),
+    ).toBe("https://i.suicaodex.com/covers/wd-id/wd-cover.512.webp");
+    expect(buildCoverUrl({ ...manga, cover: null })).toBe("");
+    expect(() =>
+      buildCoverUrl({ ...manga, cover: { url: "file:///secret" } }),
+    ).toThrow("HTTP or HTTPS");
   });
 });
 
@@ -70,9 +78,14 @@ describe("mangaToWidgetPayload", () => {
       name: "manga_author",
       value: "Fukuda Kentarou",
     });
-    expect(payload.dynamic.some((field) => field.name === "manga_tags")).toBe(false);
+    expect(payload.dynamic.some((field) => field.name === "manga_tags")).toBe(
+      false,
+    );
     expect(
-      String(payload.dynamic.find((field) => field.name === "manga_description")?.value),
+      String(
+        payload.dynamic.find((field) => field.name === "manga_description")
+          ?.value,
+      ),
     ).toEndWith("...");
   });
 
@@ -97,15 +110,19 @@ describe("mangaToWidgetPayload", () => {
     expect(payload.dynamic).toContainEqual({
       type: 3,
       name: "image",
-      value: { url: "https://i.suicaodex.com/covers/manga-1/cover-1.webp" },
+      value: { url: "https://i.suicaodex.com/covers/manga-1/cover-1.512.webp" },
     });
     expect(payload.dynamic).toContainEqual({
       type: 3,
       name: "hero_manga_cover",
-      value: { url: "https://i.suicaodex.com/covers/manga-1/cover-1.webp" },
+      value: { url: "https://i.suicaodex.com/covers/manga-1/cover-1.512.webp" },
     });
-    expect(payload.dynamic.some((field) => field.name === "text_4")).toBe(false);
-    expect(payload.dynamic.some((field) => field.name === "label_4")).toBe(false);
+    expect(payload.dynamic.some((field) => field.name === "text_4")).toBe(
+      false,
+    );
+    expect(payload.dynamic.some((field) => field.name === "label_4")).toBe(
+      false,
+    );
   });
 
   test("keeps dynamic fields within Discord's limit", () => {
@@ -122,14 +139,16 @@ describe("mangaToWidgetPayload", () => {
       {
         ...manga,
         title: longTitle,
-        alt_titles: {
+        alternativeTitles: {
           vi: ["Tên tiếng Việt ngắn"],
         },
       },
       config,
     );
 
-    const mangaTitle = payload.dynamic.find((field) => field.name === "manga_title");
+    const mangaTitle = payload.dynamic.find(
+      (field) => field.name === "manga_title",
+    );
     const title = payload.dynamic.find((field) => field.name === "title");
 
     expect(mangaTitle?.type).toBe(1);
@@ -148,7 +167,7 @@ describe("mangaToWidgetPayload", () => {
     const payload = mangaToWidgetPayload(
       {
         ...manga,
-        alt_titles: {
+        alternativeTitles: {
           vi: ["Tên tiếng Việt"],
           en: ["Two Sides of Taisei"],
         },
@@ -167,11 +186,31 @@ describe("mangaToWidgetPayload", () => {
   test("emits stats grid fields used by the bottom widget", () => {
     const payload = mangaToWidgetPayload(manga, config);
 
-    expect(payload.dynamic).toContainEqual({ type: 1, name: "public", value: "Publication" });
-    expect(payload.dynamic).toContainEqual({ type: 1, name: "year", value: "2019" });
-    expect(payload.dynamic).toContainEqual({ type: 1, name: "status_label", value: "Status" });
-    expect(payload.dynamic).toContainEqual({ type: 1, name: "status_text", value: "COMPLETED" });
-    expect(payload.dynamic).toContainEqual({ type: 1, name: "last_updated", value: "Updated" });
+    expect(payload.dynamic).toContainEqual({
+      type: 1,
+      name: "public",
+      value: "Publication",
+    });
+    expect(payload.dynamic).toContainEqual({
+      type: 1,
+      name: "year",
+      value: "2019",
+    });
+    expect(payload.dynamic).toContainEqual({
+      type: 1,
+      name: "status_label",
+      value: "Status",
+    });
+    expect(payload.dynamic).toContainEqual({
+      type: 1,
+      name: "status_text",
+      value: "COMPLETED",
+    });
+    expect(payload.dynamic).toContainEqual({
+      type: 1,
+      name: "last_updated",
+      value: "Updated",
+    });
     expect(payload.dynamic).toContainEqual({
       type: 1,
       name: "last_updated_value",
@@ -192,5 +231,32 @@ describe("mangaToWidgetPayload", () => {
       name: "stats_views_count",
       value: 9876,
     });
+  });
+
+  test("handles oneshots, chapter zero, missing metadata and invalid update dates", () => {
+    const field = (value: Manga, name: string) =>
+      mangaToWidgetPayload(value, config).dynamic.find((x) => x.name === name)
+        ?.value;
+    expect(
+      field({ ...manga, latestChapter: { number: null } }, "manga_chapter"),
+    ).toBe("Oneshot");
+    expect(
+      field({ ...manga, latestChapter: { number: "0" } }, "manga_chapter"),
+    ).toBe("Chapter 0");
+    const empty: Manga = {
+      id: "empty",
+      title: "Empty",
+      cover: null,
+      latestChapter: null,
+    };
+    expect(field(empty, "manga_chapter")).toBe("No chapters");
+    expect(field(empty, "manga_author")).toBe("Unknown");
+    expect(field(empty, "stats_chapters_count")).toBe(0);
+    expect(
+      field(
+        { ...manga, latestChapterPublishedAt: "invalid" },
+        "last_updated_value",
+      ),
+    ).toBe("Chapter 27");
   });
 });

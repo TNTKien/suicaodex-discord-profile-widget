@@ -20,9 +20,8 @@ describe("loadConfig", () => {
 
     expect(config.mode).toBe("random");
     expect(config.fixed.mangaIds).toEqual([]);
-    expect(config.fixed.cacheDir).toBe(".cache/suicaodex/manga");
-    expect(config.suicaodex.apiBaseUrl).toBe("https://wd.suicaodex.com");
-    expect(config.suicaodex.coverBaseUrl).toBe("https://i.suicaodex.com/covers");
+    expect(config.fixed.cacheDir).toBe(".cache/suicaodex/redive/manga");
+    expect(config.suicaodex.apiBaseUrl).toBe("https://redive.suicaodex.com");
     expect(config.suicaodex.contentRatings).toEqual(["safe"]);
     expect(config.suicaodex.hasChapters).toBe(true);
     expect(config.updateIntervalSeconds).toBe(300);
